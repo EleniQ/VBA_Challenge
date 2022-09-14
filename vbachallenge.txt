@@ -1,0 +1,164 @@
+Sub VBA_is_painful()
+'Set variables
+On Error GoTo ErrorHandler
+
+    Dim Ticker As String
+    Dim T_Location As Integer
+    Dim ws_num As Integer
+    Dim ws As Worksheet
+    Dim open1 As Double
+    Dim close2 As Double
+    Dim Difference As Double
+    Dim PercentChange As Double
+    Dim Volume As Double
+    Dim TotalVolume As Double
+    Dim lRow As Long
+    
+
+'Count all worksheets
+    
+    ws_num = ThisWorkbook.Worksheets.Count
+    
+'Set the first loop and T_Location to run through all worksheets to each lastrow
+
+    For i = 1 To ws_num
+        T_Location = 2
+'ThisWorkbook.Worksheets(i).Activate and input headings for data
+
+        Set ws = ThisWorkbook.Worksheets(i)
+        lastrow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+        ws.Range("I1") = "Ticker"
+        ws.Range("j1") = "Yearly Change"
+        ws.Range("k1") = "Percent Change"
+        ws.Range("l1") = "Total Stock Volume"
+    
+
+'Inner Loop
+        TotalVolume = 0
+        open1 = 0
+        
+        For lRow = 2 To lastrow
+            
+
+            If lRow > 2 And ws.Cells(lRow, 1) <> ws.Cells(lRow + 1, 1) Then    ' Ignore the first change - This row <> next row.... Add totals row, reset to new row values
+                
+                close2 = ws.Cells(lRow, 6).Value
+                
+                Difference = close2 - open1
+                
+                
+                TotalVolume = TotalVolume + ws.Cells(lRow, 7).Value
+                
+                
+                
+                ws.Cells(T_Location, 9) = Ticker
+                ws.Cells(T_Location, 10) = Difference
+                ws.Cells(T_Location, 11).Value = Round((Difference / open1) * 100, 2)
+                ws.Cells(T_Location, 12) = TotalVolume
+                
+                
+               
+                If Difference < 0 Then
+                    ws.Cells(T_Location, 10).Interior.ColorIndex = 3
+                        
+                ElseIf Difference > 0 Then
+                    ws.Cells(T_Location, 10).Interior.ColorIndex = 4
+                            
+                Else: ws.Cells(T_Location, 10).Interior.ColorIndex = 6
+                End If
+                
+                T_Location = T_Location + 1
+          
+          
+          
+            
+                Ticker = ws.Cells(lRow + 1, 1).Value
+                open1 = ws.Cells(lRow + 1, 3).Value
+                close2 = 0
+                TotalVolume = 0 'ws.Cells(lRow + 1, 7).Value
+                
+            
+            Else  'first run or same ticker
+                
+                If lRow = 2 Then
+                    open1 = ws.Cells(lRow, 3).Value
+                End If
+                
+                
+                Ticker = ws.Cells(lRow, 1).Value
+                TotalVolume = TotalVolume + ws.Cells(lRow, 7).Value
+                
+
+            End If
+
+             Next lRow
+             
+'Bonus (set variables and create table and result placement)
+
+             
+Dim GIncrease As Double
+Dim GDecrease As Double
+Dim GVolume As Double
+
+ws.Range("O1") = "Ticker"
+ws.Range("P1") = "Value"
+ws.Range("N2") = "Greatest % Increase"
+ws.Range("N3") = "Greatest % Decrease"
+ws.Range("N4") = "Greatest Volume"
+
+
+    
+    GIncrease = 0
+    GDecrease = 0
+    GVolume = 0
+
+    last_row = ws.Cells(Rows.Count, 9).End(xlUp).Row
+    
+'bloop= bonus loop
+
+    For bloop = 2 To last_row
+
+        If ws.Cells(bloop, 11) > GIncrease Then
+            GIncrease = ws.Cells(bloop, 11)
+            GIncrease_Ticker = ws.Cells(bloop, 9)
+        End If
+       
+        If ws.Cells(bloop, 12) > GVolume Then
+            GVolume = ws.Cells(bloop, 12)
+            GVolume_Ticker = ws.Cells(bloop, 9)
+        End If
+        
+
+        If ws.Cells(bloop, 11) < GDecrease Then
+            GDecrease = ws.Cells(bloop, 11)
+            GDecrease_Ticker = ws.Cells(bloop, 9)
+        End If
+
+        If ws.Cells(bloop, 12) > GVolume Then
+            GVolume = ws.Cells(bloop, 12)
+            GVolume_Ticker = ws.Cells(bloop, 9)
+        End If
+            
+    Next bloop
+  
+    ws.Range("P2").Value = GIncrease
+    ws.Range("P3").Value = GDecrease
+    ws.Range("P4").Value = GVolume
+    ws.Range("O2").Value = GIncrease_Ticker
+    ws.Range("O3").Value = GDecrease_Ticker
+    ws.Range("O4").Value = GVolume_Ticker
+    
+    Next i
+
+GoTo Exitline
+
+
+        
+
+                
+ErrorHandler:
+MsgBox (Err.Description)
+Exit Sub
+Exitline:
+MsgBox ("Done")
+End Sub
